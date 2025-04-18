@@ -145,8 +145,8 @@ def convert_simp_to_simponly(lean_file, fast_mode=False):
             info_objects = __get_info_objects(temp_file_path)            
 
             replacements = {}
-            for info_object in info_objects:
-                print(f"Registering suggestion {k+1}/{len(info_objects)}: {info_objects[k]['data']}")
+            for k, info_object in enumerate(info_objects):
+                print(f"Registering suggestion {k+1}/{len(info_objects)}: {info_object['data']}")
                 start_pos, end_pos, suggestion = __process_simponly_info_object(info_object, content)
                 replacements[(start_pos, end_pos)] = suggestion
 
