@@ -31,6 +31,9 @@ The `--fast` flag provides significantly faster processing, but may result in le
 > [!WARNING]
 > This tool is still under development and does not guarantee perfect results. You may have to manually fix the output in some cases.
 
+> [!NOTE]
+> At the end of this processing, your code might contain some `simp only` or `simp only at ...` statements that may not be necessary. These are currently not automatically removed.
+
 ## License
 
 This project is licensed under the MIT License.

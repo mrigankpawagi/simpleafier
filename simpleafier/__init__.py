@@ -51,20 +51,30 @@ def __process_simponly_info_object(info_object, content):
         word_after_at_pos = content.find(word_after_at, first_at_pos+2)
         end_pos = word_after_at_pos + len(word_after_at) - 1
     else:
-        # we have one of "simp", "simp [...]", "simp only [...]"
+        # we have one of "simp", "simp [...]", "simp only [...]" or "simp only"
         # (each of these is actually "simp?")
         
         # find the first non-whitespace character after "simp" in content
         first_non_whitespace_char = content[start_pos+5:].lstrip()[0]
         first_non_whitespace_char_pos = content.find(first_non_whitespace_char, start_pos + 5)
         
-        if (
-            first_non_whitespace_char == "[" or 
-            content[first_non_whitespace_char_pos:first_non_whitespace_char_pos + 4] == "only"
-        ):
+        if first_non_whitespace_char == "[":
+            # "simp [...]"
             # find the first "]" after this
             closing_bracket_pos = content.find("]", first_non_whitespace_char_pos)
             end_pos = closing_bracket_pos
+        elif content[first_non_whitespace_char_pos:first_non_whitespace_char_pos + 4] == "only":
+            first_non_whitespace_char_after_only = content[first_non_whitespace_char_pos + 4:].lstrip()[0]
+            first_non_whitespace_char_after_only_pos = content.find(first_non_whitespace_char_after_only, first_non_whitespace_char_pos + 4)
+            
+            if first_non_whitespace_char_after_only == "[":
+                # "simp only [...]"
+                # find the first "]" after this
+                closing_bracket_pos = content.find("]", first_non_whitespace_char_after_only_pos)
+                end_pos = closing_bracket_pos
+            else:
+                # "simp only"
+                end_pos = first_non_whitespace_char_pos + 3
             
         else:
             # just select "simp"
@@ -149,7 +159,7 @@ def convert_simp_to_simponly(lean_file, fast_mode=False):
             with open(temp_file_path, "w", encoding="utf-8") as f:
                 f.write(content)
                 
-            info_objects = __get_info_objects(temp_file_path)            
+            info_objects = __get_info_objects(temp_file_path)
 
             replacements = {}
             for k, info_object in enumerate(info_objects):
