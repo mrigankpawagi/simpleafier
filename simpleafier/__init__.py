@@ -41,7 +41,7 @@ def __process_simponly_info_object(info_object, content):
 
         else:
             # the suggestion is like "simp only at ..."
-            first_at_pos = re.search(r"\bat\b", content, pos=start_pos).start()
+            first_at_pos = re.search(r"\bat\b", content[start_pos:]).start() + start_pos 
             first_at_pos_in_suggestion = re.search(r"\bat\b", suggestion).start()
             word_after_at = suggestion[first_at_pos_in_suggestion+2:].split()[0]
             
@@ -75,65 +75,99 @@ def __process_simponly_info_object(info_object, content):
     return start_pos, end_pos, suggestion
 
 
-def convert_simp_to_simponly(lean_file):
+def __get_info_objects(file_name):
+    # Run the Lean file using lake
+    result = subprocess.run(
+        ["lake", "env", "lean", "--run", file_name, "--json"],
+        capture_output=True,
+        text=True,
+        check=False
+    )
+
+    info_objects = []
+    for line in result.stdout.splitlines():
+        try:
+            info_object = json.loads(line)
+            if info_object["data"].startswith("Try this: simp"):
+                info_objects.append(info_object)
+        except json.JSONDecodeError:
+            pass
+
+    return info_objects
+
+
+def convert_simp_to_simponly(lean_file, fast_mode=False):
     try:
         temp_file_path = os.path.join(os.path.dirname(lean_file), f"simpleafier_temp{random.randint(10000, 99999)}.lean")
         with open(lean_file, "r", encoding="utf-8") as f:
             content = f.read()
 
-        k = 0
-        while True:
+        if not fast_mode:
+            k = 0
+            while True:
+                # Replace 'simp' with 'simp?' but it should not already be simp?
+                content = re.sub(r"\bsimp", "simp?", content)
+                content = re.sub(r"\bsimp\?\?", "simp?", content)
+
+                with open(temp_file_path, "w", encoding="utf-8") as f:
+                    f.write(content)
+                
+                info_objects = __get_info_objects(temp_file_path)
+                
+                # we will only process the k-th simp? in the file
+                if len(info_objects) <= k:
+                    break
+
+                info_object = info_objects[k]
+                start_pos, end_pos, suggestion = __process_simponly_info_object(info_object, content)
+                content = content[:start_pos] + suggestion + content[end_pos+1:]
+
+                print(f"Applying suggestion {k+1}/{len(info_objects)}: {info_objects[k]['data']}")
+
+                # replace any remaining simp? with simp
+                content = re.sub(r"\bsimp\?", "simp", content)
+
+                k += 1
+
+            # Write the modified content to the actual Lean file
+            with open(lean_file, "w", encoding="utf-8") as f:
+                f.write(content)
+        
+        else:
             # Replace 'simp' with 'simp?' but it should not already be simp?
             content = re.sub(r"\bsimp", "simp?", content)
             content = re.sub(r"\bsimp\?\?", "simp?", content)
 
             with open(temp_file_path, "w", encoding="utf-8") as f:
                 f.write(content)
+                
+            info_objects = __get_info_objects(temp_file_path)            
 
-            # Run the Lean file using lake
-            try:
-                result = subprocess.run(
-                    ["lake", "env", "lean", "--run", temp_file_path, "--json"],
-                    capture_output=True,
-                    text=True,
-                    check=False
-                )
-            except Exception as e:
-                print(f"Error running Lean: {e}", file=sys.stderr)
+            replacements = {}
+            for info_object in info_objects:
+                print(f"Registering suggestion {k+1}/{len(info_objects)}: {info_objects[k]['data']}")
+                start_pos, end_pos, suggestion = __process_simponly_info_object(info_object, content)
+                replacements[(start_pos, end_pos)] = suggestion
 
-            info_objects = []
-            for line in result.stdout.splitlines():
-                try:
-                    info_object = json.loads(line)
-                    if info_object["data"].startswith("Try this: simp"):
-                        info_objects.append(info_object)
-                except json.JSONDecodeError:
-                    pass
-            
-            # we will only process the k-th simp? in the file
-            if len(info_objects) <= k:
-                break
-
-            info_object = info_objects[k]
-            start_pos, end_pos, suggestion = __process_simponly_info_object(info_object, content)
-            content = content[:start_pos] + suggestion + content[end_pos+1:]
-
-            print(f"Applying suggestion {k+1}/{len(info_objects)}: {info_objects[k]['data']}")
+            # replace in reverse order so as to not mess up indexes
+            replacement_pos = list(replacements.keys())
+            replacement_pos.sort(reverse=True)
+            for k, (start_pos, end_pos) in enumerate(replacement_pos):
+                suggestion = replacements[(start_pos, end_pos)]
+                content = content[:start_pos] + suggestion + content[end_pos+1:]
 
             # replace any remaining simp? with simp
             content = re.sub(r"\bsimp\?", "simp", content)
 
-            k += 1
-
-        # Write the modified content to the actual Lean file
-        with open(temp_file_path, "w", encoding="utf-8") as f:
-            f.write(content)
+            # Write the modified content to the actual Lean file
+            with open(lean_file, "w", encoding="utf-8") as f:
+                f.write(content)
 
     finally:
         # if the temp file was created, delete it before exiting
         if os.path.isfile(temp_file_path):
             try:
-                # os.remove(temp_file_path)
+                os.remove(temp_file_path)
                 pass
             except Exception:
                 pass
@@ -153,6 +187,11 @@ def main():
         action="store_true",
         help="Convert any simp to simp only. Warning: This is not intended to be either sound or complete. Use with caution."
     )
+    parser.add_argument(
+        "--fast",
+        action="store_true",
+        help="Run in fast mode by reducing accuracy."
+    )
     args = parser.parse_args()
 
     # Check if the file exists
@@ -161,7 +200,7 @@ def main():
         sys.exit(1)
 
     if args.simponly:
-        convert_simp_to_simponly(args.lean_file)
+        convert_simp_to_simponly(args.lean_file, args.fast)
     else:
         print("No feature flag provided. Use --help for help.", file=sys.stderr)
         sys.exit(1)
