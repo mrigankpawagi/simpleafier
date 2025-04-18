@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='Simpleafier',
-    version='0.1.1',
+    version='0.1.2',
     author='Mrigank Pawagi',
     author_email='mrigankpawagi@gmail.com',
     description='A command line tool to help improve the quality of Lean code by converting any "simp" to "simp only".',
