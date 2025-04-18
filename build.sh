@@ -1,3 +1,4 @@
+alias python=/usr/bin/python3.13
+
 rm -r dist build *.egg-info
-python setup.py sdist bdist_wheel
-python -m twine upload dist/*
+python -m build && python -m twine upload dist/*

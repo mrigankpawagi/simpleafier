@@ -10,14 +10,16 @@ readme = "README.md"
 authors = [
     { name = "Mrigank Pawagi", email = "mrigankpawagi@gmail.com" }
 ]
-license = { text = "MIT" }
+license-files = ["LICENSE.txt"]
 requires-python = ">=3.6"
 classifiers = [
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: POSIX :: Linux"
 ]
 dependencies = []
+
+[console_scripts]
+simpleafier = "simpleafier.__init__:main"
 
 [project.urls]
 "Homepage" = "https://github.com/mrigankpawagi/Simpleafier"
