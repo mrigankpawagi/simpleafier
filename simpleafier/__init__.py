@@ -42,12 +42,10 @@ def __process_simponly_info_object(info_object, content):
 
         else:
             # the suggestion is like "simp only at ..."
+            # (this simp is probably useless and may be removed...)
             first_at_pos = re.search(r"\bat\b", content[start_pos:]).start() + start_pos 
             first_at_pos_in_suggestion = re.search(r"\bat\b", suggestion).start()
             word_after_at = suggestion[first_at_pos_in_suggestion+2:].split()[0]
-            
-            # this simp is actually useless and can be removed
-            suggestion = ""
 
         # now find the first ocurrence of `word_after_at` after the first "at"
         word_after_at_pos = content.find(word_after_at, first_at_pos+2)
@@ -97,6 +95,17 @@ def __get_info_objects(file_name):
     return info_objects
 
 
+def __replace_simp(content):
+    # Replace 'simp' with 'simp?' but it should not already be simp?
+    new_content = re.sub(r"\bsimp", "simp?", content)
+    new_content = re.sub(r"\bsimp\?\?", "simp?", new_content)
+
+    # Change any "@[simp?]" back to "@[simp]"
+    new_content = re.sub(r"@\[simp\?\]", "@[simp]", new_content)
+
+    return new_content
+
+
 def convert_simp_to_simponly(lean_file, fast_mode=False):
     try:
         temp_file_path = os.path.join(os.path.dirname(lean_file), f"simpleafier_temp{random.randint(10000, 99999)}.lean")
@@ -106,24 +115,24 @@ def convert_simp_to_simponly(lean_file, fast_mode=False):
         if not fast_mode:
             k = 0
             while True:
-                # Replace 'simp' with 'simp?' but it should not already be simp?
-                content = re.sub(r"\bsimp", "simp?", content)
-                content = re.sub(r"\bsimp\?\?", "simp?", content)
+                new_content = __replace_simp(content)
 
                 with open(temp_file_path, "w", encoding="utf-8") as f:
-                    f.write(content)
+                    f.write(new_content)
                 
                 info_objects = __get_info_objects(temp_file_path)
                 
                 # we will only process the k-th simp? in the file
                 if len(info_objects) <= k:
                     break
+                
+                content = new_content
 
                 info_object = info_objects[k]
+                print(f"Applying suggestion {k+1}/{len(info_objects)}: {info_objects[k]['data']}")
+
                 start_pos, end_pos, suggestion = __process_simponly_info_object(info_object, content)
                 content = content[:start_pos] + suggestion + content[end_pos+1:]
-
-                print(f"Applying suggestion {k+1}/{len(info_objects)}: {info_objects[k]['data']}")
 
                 # replace any remaining simp? with simp
                 content = re.sub(r"\bsimp\?", "simp", content)
@@ -135,9 +144,7 @@ def convert_simp_to_simponly(lean_file, fast_mode=False):
                 f.write(content)
         
         else:
-            # Replace 'simp' with 'simp?' but it should not already be simp?
-            content = re.sub(r"\bsimp", "simp?", content)
-            content = re.sub(r"\bsimp\?\?", "simp?", content)
+            content = __replace_simp(content)
 
             with open(temp_file_path, "w", encoding="utf-8") as f:
                 f.write(content)

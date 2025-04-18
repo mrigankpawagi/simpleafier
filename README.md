@@ -21,15 +21,15 @@ python -m pip install Simpleafier
 To convert all `simp` calls in a Lean file to `simp only`:
 
 ```bash
-python -m simpleafier path/to/your/file.lean --simponly
+python -m simpleafier path/to/your/file.lean --simponly --fast
 ```
 
 `simpleafier` must be invoked from the root of your lake project. The lean file provided must be compilable without any errors. `simpleafier` will create a temporary file in the same directory as the original file for processing. At the end of the process, the temporary file will be deleted and the original file will be replaced with the modified version.
 
+The `--fast` flag provides significantly faster processing, but may result in less accurate results that may need more manual fixes. However it is currently the **recommended mode** for using `simpleafier` as it is more stable and gives reasonably good results.
+
 > [!WARNING]
 > This tool is still under development and does not guarantee perfect results. You may have to manually fix the output in some cases.
-
-You can also pass the `--fast` flag for significantly faster processing. This will however provide less accurate results and you may have to manually more `simp only` tactics in the output.
 
 ## License
 
