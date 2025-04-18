@@ -4,6 +4,7 @@ import os
 import re
 import subprocess
 import json
+import random
 
 
 def __process_simponly_info_object(info_object, content):
@@ -76,7 +77,7 @@ def __process_simponly_info_object(info_object, content):
 
 def convert_simp_to_simponly(lean_file):
     try:
-        temp_file_path = os.path.join(os.path.dirname(lean_file), "simpleafier_temp.lean")
+        temp_file_path = os.path.join(os.path.dirname(lean_file), f"simpleafier_temp{random.randint(10000, 99999)}.lean")
         with open(lean_file, "r", encoding="utf-8") as f:
             content = f.read()
 
