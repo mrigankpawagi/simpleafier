@@ -5,7 +5,7 @@ setup(
     version='0.1.0',
     author='Mrigank Pawagi',
     author_email='mrigankpawagi@gmail.com',
-    description='A command line tool to help improve the quality of Lean code by converting "simp" to "simp only".',
+    description='A command line tool to help improve the quality of Lean code by converting any "simp" to "simp only".',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
     url='https://github.com/mrigankpawagi/Simpleafier',

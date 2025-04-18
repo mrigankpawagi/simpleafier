@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "Simpleafier"
 version = "0.1.0"
-description = "A command line tool to help improve the quality of Lean code by converting "simp" to "simp only".
+description = "A command line tool to help improve the quality of Lean code by converting any \"simp\" to \"simp only\"."
 readme = "README.md"
 authors = [
     { name = "Mrigank Pawagi", email = "mrigankpawagi@gmail.com" }

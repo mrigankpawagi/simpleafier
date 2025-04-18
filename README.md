@@ -13,7 +13,7 @@ Simpleafier is a command line tool to help improve the quality of Lean code by c
 Simpleafier is available on PyPI and can be installed using `pip`.
 
 ```bash
-python -m pip install simpleafier
+python -m pip install Simpleafier
 ```
 
 ## Usage
