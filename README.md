@@ -29,6 +29,8 @@ simpleafier path/to/your/file.lean --simponly
 > [!WARNING]
 > This tool is still under development and does not guarantee perfect results. You may have to manually fix the output in some cases.
 
+You can also pass the `--fast` flag for significantly faster processing. This will however provide less accurate results and you may have to manually more `simp only` tactics in the output.
+
 ## License
 
 This project is licensed under the MIT License.
